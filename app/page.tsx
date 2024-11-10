@@ -1,101 +1,158 @@
+"use client";
+
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { IoMdDownload } from "react-icons/io";
+import { useRef, useState } from "react";
+import { fetchFile, toBlobURL } from "@ffmpeg/util";
+
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+type OutputFile = {
+  file: File;
+  url: string;
+};
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+const Home = () => {
+  const [isEncoding, setIsEncoding] = useState(false);
+  const [outputFile, setOutputFile] = useState<OutputFile>();
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const ffmpegRef = useRef<FFmpeg>();
+
+  const loadFFmpeg = async () => {
+    if (ffmpegRef.current) {
+      return ffmpegRef.current;
+    }
+
+    const ffmpeg = new FFmpeg();
+    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+
+    ffmpeg.on("log", (log) => console.log(log.message));
+
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+      wasmURL: await toBlobURL(
+        `${baseURL}/ffmpeg-core.wasm`,
+        "application/wasm",
+      ),
+    });
+
+    ffmpegRef.current = ffmpeg;
+
+    return ffmpeg;
+  };
+
+  const handleFile = async (file: File) => {
+    if (isEncoding) {
+      console.warn("Already encoding.");
+      return;
+    }
+
+    if (outputFile) {
+      setOutputFile(undefined);
+      URL.revokeObjectURL(outputFile.url);
+    }
+
+    const ffmpeg = await loadFFmpeg();
+    const inputFileData = await fetchFile(file);
+
+    const inputFileName = file.name;
+    const outputFileName = inputFileName.replace(/\.[^/.]+$/, "") + ".gif";
+
+    await ffmpeg.writeFile(inputFileName, inputFileData);
+
+    const filters =
+      "fps=50,mpdecimate=3,split[a][b],[a]palettegen[p],[b][p]paletteuse";
+
+    const ffmpegParams = [
+      "-hide_banner",
+      "-i",
+      file.name,
+      "-lavfi",
+      filters,
+      outputFileName,
+    ];
+
+    setIsEncoding(true);
+
+    console.log("Encoding...");
+
+    await ffmpeg.exec(ffmpegParams);
+
+    console.log("Done encoding.");
+
+    setIsEncoding(false);
+
+    const outputData = await ffmpeg.readFile(outputFileName);
+
+    const outputFile_ = new File([outputData], outputFileName, {
+      type: "image/gif",
+    });
+
+    const url = URL.createObjectURL(outputFile_);
+
+    console.log("Output URL:", url);
+
+    setOutputFile({
+      url,
+      file: outputFile_,
+    });
+
+    // clear wasm files
+    ffmpeg.deleteFile(inputFileName);
+    ffmpeg.deleteFile(outputFileName);
+  };
+
+  return (
+    <main className="absolute inset-0 z-[-1] grid place-items-center">
+      <div className="relative">
+        {outputFile && (
+          <div className="group absolute -top-4 left-1/2 -translate-x-1/2 -translate-y-full">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              width={176}
+              height={320}
+              src={outputFile.url}
+              alt={outputFile.file.name}
+              className="max-h-80 max-w-44 object-cover"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+            <a
+              href={outputFile.url}
+              download={outputFile.file.name}
+              className="absolute bottom-1 left-1 hidden cursor-pointer rounded-full p-3 hover:bg-emerald-200 group-hover:block"
+            >
+              <IoMdDownload className="size-5" />
+            </a>
+          </div>
+        )}
+        <button
+          disabled={isEncoding}
+          onClick={() => inputRef.current?.click()}
+          className="cursor-pointer rounded-sm bg-emerald-500 px-4 py-2.5 text-white disabled:bg-gray-300 disabled:text-gray-500"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          Select file
+        </button>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        onChange={({ target }) => {
+          const file = target.files?.[0];
+
+          if (!file) {
+            console.warn("No file selected.");
+            return;
+          }
+
+          handleFile(file);
+
+          target.value = "";
+        }}
+      />
+    </main>
   );
-}
+};
+
+export default Home;
