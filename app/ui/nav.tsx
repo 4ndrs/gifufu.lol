@@ -1,9 +1,15 @@
-import Link from "next/link";
+import { twMerge } from "tailwind-merge";
 import { FaGithub } from "react-icons/fa";
 
-const Nav = () => {
+import Link from "next/link";
+
+type Props = {
+  className?: string;
+};
+
+const Nav = ({ className }: Props) => {
   return (
-    <nav className="relative flex">
+    <nav className={twMerge("relative flex", className)}>
       <Link href="/">gifufu.lol</Link>
       <a
         target="_blank"
