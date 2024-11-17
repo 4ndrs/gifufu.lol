@@ -17,6 +17,7 @@ const Nav = ({ className }: Props) => (
       <a
         rel="noopener"
         target="_blank"
+        className="rounded-full"
         title="Check out this cool github repo"
         href="https://github.com/4ndrs/gifufu.lol"
       >

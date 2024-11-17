@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  button:focus-visible,
+  a:focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-emerald-600;
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

@@ -44,19 +44,19 @@ const ThemeToggler = ({ className }: Props) => {
         let theme: "dark" | "light";
 
         if (themeCookie === "dark") {
-          Cookies.set("theme", "light");
+          Cookies.set("theme", "light", { expires: 365 });
           theme = "light";
         } else if (themeCookie === "light") {
-          Cookies.set("theme", "dark");
+          Cookies.set("theme", "dark", { expires: 365 });
           theme = "dark";
         } else if (
           themeCookie === undefined &&
           window.matchMedia("(prefers-color-scheme: dark)").matches
         ) {
-          Cookies.set("theme", "light");
+          Cookies.set("theme", "light", { expires: 365 });
           theme = "light";
         } else {
-          Cookies.set("theme", "dark");
+          Cookies.set("theme", "dark", { expires: 365 });
           theme = "dark";
         }
 

@@ -40,7 +40,7 @@ const RootLayout = async ({
     // eslint-disable-next-line tailwindcss/no-custom-classname
     <html lang="en" className={isDarkMode ? "dark" : undefined}>
       <body
-        className={`${lato.className} ${fredoka.variable} ${quicksand.variable} relative h-screen overflow-auto bg-white antialiased dark:bg-gray-900 dark:text-gray-200`}
+        className={`${lato.className} ${fredoka.variable} ${quicksand.variable} relative h-screen overflow-auto bg-white text-black antialiased dark:bg-gray-900 dark:text-gray-200`}
       >
         <div className="flex h-full flex-col bg-white dark:bg-gray-900">
           <div className="flex size-full flex-col px-5 pt-5">
