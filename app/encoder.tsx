@@ -226,7 +226,11 @@ const Encoder = () => {
             Download GIF
           </Button>
 
-          <Viewer fileName={outputFile.file.name} fileUrl={outputFile.url}>
+          <Viewer
+            asChild
+            fileUrl={outputFile.url}
+            fileName={outputFile.file.name}
+          >
             <Button>View GIF</Button>
           </Viewer>
 

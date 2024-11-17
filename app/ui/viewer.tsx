@@ -2,15 +2,14 @@ import { FaTimes } from "react-icons/fa";
 
 import * as Dialog from "@radix-ui/react-dialog";
 
-type Props = {
+interface Props extends React.ComponentProps<typeof Dialog.Trigger> {
   fileUrl: string;
   fileName: string;
-  children: React.ReactNode;
-};
+}
 
-const Viewer = ({ children, fileUrl, fileName }: Props) => (
+const Viewer = ({ children, fileUrl, fileName, ...props }: Props) => (
   <Dialog.Root>
-    <Dialog.Trigger asChild>{children}</Dialog.Trigger>
+    <Dialog.Trigger {...props}>{children}</Dialog.Trigger>
 
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 grid place-items-center bg-black/25">
