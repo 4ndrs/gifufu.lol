@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import Button from "@/app/ui/button";
+import Viewer from "@/app/ui/viewer";
 
 type OutputFile = {
   file: File;
@@ -225,7 +226,10 @@ const Encoder = () => {
             Download GIF
           </Button>
 
-          <Button disabled>View GIF</Button>
+          <Viewer fileName={outputFile.file.name} fileUrl={outputFile.url}>
+            <Button>View GIF</Button>
+          </Viewer>
+
           <Button disabled>Re-encode</Button>
 
           <Button onClick={() => inputRef.current?.click()}>

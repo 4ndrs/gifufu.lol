@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import Image from "next/image";
 import Encoder from "./encoder";
+import blurData from "@/app/lib/blur-data.json";
 
 import { Suspense } from "react";
 
@@ -17,7 +18,7 @@ const Home = () => (
         Drag, drop, and watch the magic happen… fufufu~
       </p>
 
-      <div className="mt-2 h-[11.625rem] w-[13.875rem] scale-75 rounded-md lg:scale-100">
+      <div className="mt-2 h-[11.625rem] w-[13.875rem] scale-75 overflow-hidden rounded-md lg:scale-100">
         <Suspense
           fallback={<div className="size-full animate-pulse bg-emerald-200" />}
         >
@@ -36,12 +37,16 @@ const SmugAnimeImage = async () => {
   const smugs = await fs.readdir(smugsDirectory);
   const randomSmug = smugs[Math.floor(Math.random() * smugs.length)];
 
+  const blurDataURL = blurData[randomSmug as keyof typeof blurData];
+
   return (
     <Image
       width={222}
       height={186}
       alt="smug anime girl"
       src={`/smugs/${randomSmug}`}
+      placeholder="blur"
+      blurDataURL={blurDataURL}
       className="size-full object-cover"
     />
   );
