@@ -20,6 +20,8 @@ const ThemeToggler = ({ className }: Props) => {
     // we need to change themes somehow when the user changes their system theme
     const media = window.matchMedia("(prefers-color-scheme: dark)");
 
+    enableDarkMode(media.matches);
+
     const listener = (event: MediaQueryListEvent) =>
       enableDarkMode(event.matches);
 
