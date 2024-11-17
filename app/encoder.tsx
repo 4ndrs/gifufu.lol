@@ -3,7 +3,7 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { FaFolderOpen } from "react-icons/fa";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
 import Button from "@/app/ui/button";
@@ -209,7 +209,7 @@ const Encoder = () => {
       <motion.div
         key="output-file"
         {...commonProps}
-        className="rounded-lg bg-gray-100 p-4 shadow-md"
+        className="rounded-lg bg-gray-100 p-4 shadow-md dark:bg-gray-800"
       >
         <div className="mb-4">
           <h3 className="text-lg font-bold">Encoded File Information</h3>
@@ -279,7 +279,7 @@ const Encoder = () => {
               setIsDragging(false);
               handleFile(event.dataTransfer.files[0]);
             }}
-            className="fixed inset-0 grid place-items-center rounded-lg bg-stone-100/70 p-4"
+            className="fixed inset-0 grid place-items-center rounded-lg bg-stone-100/70 p-4 dark:bg-black/70"
           >
             <div className="flex flex-col items-center gap-2">
               <FaFolderOpen className="size-72 text-emerald-500" />

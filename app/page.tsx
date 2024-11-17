@@ -9,12 +9,12 @@ import { Suspense } from "react";
 const Home = () => (
   <main className="h-full">
     <div className="relative flex h-full flex-col items-center gap-4 text-center">
-      <h1 className="text-[min(7vw,4rem)] font-extrabold [font-family:var(--font-fredoka)] lg:text-[min(5vw,4rem)]">
+      <h1 className="text-[min(7vw,4rem)] font-extrabold [font-family:var(--font-fredoka)] lg:text-[min(5vw,4rem)] dark:text-white">
         <span className="block lg:inline">Gifufu~ 💫</span> The Ultimate GIF
         Creator
       </h1>
 
-      <p className="text-[min(3.5vw,1.5rem)] font-semibold text-gray-600 [font-family:var(--font-quicksand)] lg:text-[min(2.9vw,1.5rem)]">
+      <p className="text-[min(3.5vw,1.5rem)] font-semibold text-gray-600 [font-family:var(--font-quicksand)] lg:text-[min(2.9vw,1.5rem)] dark:text-gray-400">
         Drag, drop, and watch the magic happen… fufufu~
       </p>
 

@@ -10,15 +10,21 @@ interface ButtonProps extends React.ComponentProps<"button"> {
 
 type Props = ButtonProps | LinkProps;
 
-const Button = ({ children, className, ...props }: Props) => {
-  const baseClasses =
-    "cursor-pointer rounded-md bg-emerald-500 px-4 py-2.5 font-bold text-white disabled:cursor-auto disabled:bg-gray-300 disabled:text-gray-500";
+const Button = ({
+  children,
+  className: additionalClasses,
+  ...props
+}: Props) => {
+  const className = twMerge(
+    "cursor-pointer rounded-md bg-emerald-500 px-4 py-2.5 font-bold text-white disabled:cursor-auto disabled:bg-gray-300 disabled:text-gray-500",
+    additionalClasses,
+  );
 
   if (props.link) {
     const { link, ...rest } = props;
 
     return (
-      <a {...rest} className={twMerge(baseClasses, className)}>
+      <a {...rest} className={className}>
         {children}
       </a>
     );
@@ -27,13 +33,7 @@ const Button = ({ children, className, ...props }: Props) => {
   const { link, ...rest } = props;
 
   return (
-    <button
-      {...rest}
-      className={twMerge(
-        "cursor-pointer rounded-md bg-emerald-500 px-4 py-2.5 font-bold text-white disabled:cursor-auto disabled:bg-gray-300 disabled:text-gray-500",
-        className,
-      )}
-    >
+    <button {...rest} className={className}>
       {children}
     </button>
   );
