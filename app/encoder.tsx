@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Button from "@/app/ui/button";
 import Viewer from "@/app/ui/viewer";
+import useSettingsStore from "@/app/lib/store";
 
 type OutputFile = {
   file: File;
@@ -19,11 +20,14 @@ const Encoder = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isEncoding, setIsEncoding] = useState(false);
   const [outputFile, setOutputFile] = useState<OutputFile>();
+  const [lastInputFile, setLastInputFile] = useState<File>();
   const [isLoadingInput, setIsLoadingInput] = useState(false);
   const [isLoadingFFmpeg, setIsLoadingFFmpeg] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg>();
+
+  const { fps, height, mpdecimate } = useSettingsStore();
 
   useEffect(() => {
     // listen for dragging events on the whole document
@@ -107,8 +111,13 @@ const Encoder = () => {
 
     await ffmpeg.writeFile(inputFileName, inputFileData);
 
-    const filters =
-      "fps=50,mpdecimate=3,split[a][b],[a]palettegen[p],[b][p]paletteuse";
+    const fpsFilter = fps ? `fps=${fps},` : "";
+    const scaleFilter = height ? `scale=-1:${height},` : "";
+    const mpdecimateFilter = mpdecimate ? `mpdecimate=${mpdecimate},` : "";
+
+    const filters = `${fpsFilter}${scaleFilter}${mpdecimateFilter}split[a][b],[a]palettegen[p],[b][p]paletteuse`;
+
+    console.log("Filters:", filters);
 
     const ffmpegParams = [
       "-hide_banner",
@@ -157,6 +166,8 @@ const Encoder = () => {
       url,
       file: outputFile_,
     });
+
+    setLastInputFile(file);
 
     // clear wasm files
     ffmpeg.deleteFile(inputFileName);
@@ -234,7 +245,18 @@ const Encoder = () => {
             <Button>View GIF</Button>
           </Viewer>
 
-          <Button disabled>Re-encode</Button>
+          <Button
+            disabled={!lastInputFile}
+            onClick={() => {
+              if (!lastInputFile) {
+                return;
+              }
+
+              handleFile(lastInputFile);
+            }}
+          >
+            Re-encode
+          </Button>
 
           <Button onClick={() => inputRef.current?.click()}>
             Select Another File

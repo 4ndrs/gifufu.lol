@@ -1,6 +1,7 @@
 import Nav from "@/app/ui/nav";
 
 import { cookies } from "next/headers";
+import { Toaster } from "sonner";
 import { Lato, Fredoka, Quicksand } from "next/font/google";
 
 import "@/app/globals.css";
@@ -50,6 +51,8 @@ const RootLayout = async ({
 
           <div className="background-wave bottom-0 h-72 w-full shrink-0" />
         </div>
+
+        <Toaster position="top-right" />
       </body>
     </html>
   );
