@@ -7,8 +7,8 @@ import blurData from "@/app/lib/blur-data.json";
 import { Suspense } from "react";
 
 const Home = () => (
-  <main className="h-full">
-    <div className="relative flex h-full flex-col items-center gap-4 text-center">
+  <main className="flex flex-1 flex-col">
+    <div className="relative flex flex-1 flex-col items-center gap-4 text-center">
       <h1 className="text-[min(7vw,4rem)] font-extrabold [font-family:var(--font-fredoka)] lg:text-[min(5vw,4rem)] dark:text-white">
         <span className="block lg:inline">Gifufu~ 💫</span> The Ultimate GIF
         Creator

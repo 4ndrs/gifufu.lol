@@ -7,6 +7,7 @@ import { Lato, Fredoka, Quicksand } from "next/font/google";
 import "@/app/globals.css";
 
 import type { Metadata } from "next";
+import Wave from "@/app/ui/Wave";
 
 const lato = Lato({
   weight: ["400", "700", "900"],
@@ -38,18 +39,17 @@ const RootLayout = async ({
   const isDarkMode = (await cookies()).get("theme")?.value === "dark";
 
   return (
-    // eslint-disable-next-line tailwindcss/no-custom-classname
     <html lang="en" className={isDarkMode ? "dark" : undefined}>
       <body
-        className={`${lato.className} ${fredoka.variable} ${quicksand.variable} relative h-screen overflow-auto bg-white text-black antialiased dark:bg-gray-900 dark:text-gray-200`}
+        className={`${lato.className} ${fredoka.variable} ${quicksand.variable} min-h-screen bg-white text-black antialiased dark:bg-gray-900 dark:text-gray-200`}
       >
-        <div className="flex h-full flex-col bg-white dark:bg-gray-900">
-          <div className="flex size-full flex-col px-5 pt-5">
+        <div className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
+          <div className="relative flex flex-1 flex-col px-5 pt-5">
             <Nav className="mb-4" />
             {children}
           </div>
 
-          <div className="background-wave bottom-0 h-72 w-full shrink-0" />
+          <Wave />
         </div>
 
         <Toaster position="top-right" />
