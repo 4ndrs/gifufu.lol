@@ -1,4 +1,5 @@
 import Nav from "@/app/ui/nav";
+import Wave from "@/app/ui/wave_";
 
 import { cookies } from "next/headers";
 import { Toaster } from "sonner";
@@ -7,7 +8,6 @@ import { Lato, Fredoka, Quicksand } from "next/font/google";
 import "@/app/globals.css";
 
 import type { Metadata } from "next";
-import Wave from "@/app/ui/Wave";
 
 const lato = Lato({
   weight: ["400", "700", "900"],
