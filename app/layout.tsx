@@ -1,5 +1,5 @@
 import Nav from "@/app/ui/nav";
-import Wave from "@/app/ui/wave_";
+import Wave from "@/app/ui/wave";
 
 import { cookies } from "next/headers";
 import { Toaster } from "sonner";
@@ -39,6 +39,7 @@ const RootLayout = async ({
   const isDarkMode = (await cookies()).get("theme")?.value === "dark";
 
   return (
+    // eslint-disable-next-line tailwindcss/no-custom-classname
     <html lang="en" className={isDarkMode ? "dark" : undefined}>
       <body
         className={`${lato.className} ${fredoka.variable} ${quicksand.variable} min-h-screen bg-white text-black antialiased dark:bg-gray-900 dark:text-gray-200`}

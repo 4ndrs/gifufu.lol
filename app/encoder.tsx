@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { FaFolderOpen } from "react-icons/fa";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
@@ -25,7 +26,8 @@ const Encoder = () => {
   const [isLoadingFFmpeg, setIsLoadingFFmpeg] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const ffmpegRef = useRef<FFmpeg>();
+  const ffmpegRef = useRef<FFmpeg>(undefined);
+  const abortEncodingRef = useRef(false);
 
   const { fps, height, mpdecimate } = useSettingsStore();
 
@@ -101,77 +103,112 @@ const Encoder = () => {
       URL.revokeObjectURL(outputFile.url);
     }
 
-    const ffmpeg = await loadFFmpeg();
+    try {
+      const ffmpeg = await loadFFmpeg();
 
-    setIsLoadingInput(true);
+      setIsLoadingInput(true);
 
-    const inputFileData = await fetchFile(file);
-    const inputFileName = file.name;
-    const outputFileName = inputFileName.replace(/\.[^/.]+$/, "") + ".gif";
+      const inputFileData = await fetchFile(file);
+      const inputFileName = file.name;
+      const outputFileName = inputFileName.replace(/\.[^/.]+$/, "") + ".gif";
 
-    await ffmpeg.writeFile(inputFileName, inputFileData);
+      await ffmpeg.writeFile(inputFileName, inputFileData);
 
-    const fpsFilter = fps ? `fps=${fps},` : "";
-    const scaleFilter = height ? `scale=-1:${height},` : "";
-    const mpdecimateFilter = mpdecimate ? `mpdecimate=${mpdecimate},` : "";
+      const fpsFilter = fps ? `fps=${fps},` : "";
+      const scaleFilter = height ? `scale=-1:${height},` : "";
+      const mpdecimateFilter = mpdecimate ? `mpdecimate=${mpdecimate},` : "";
 
-    const filters = `${fpsFilter}${scaleFilter}${mpdecimateFilter}split[a][b],[a]palettegen[p],[b][p]paletteuse`;
+      const filters = `${fpsFilter}${scaleFilter}${mpdecimateFilter}split[a][b],[a]palettegen[p],[b][p]paletteuse`;
 
-    console.log("Filters:", filters);
+      console.log("Filters:", filters);
 
-    const ffmpegParams = [
-      "-hide_banner",
-      "-i",
-      file.name,
-      "-lavfi",
-      filters,
-      outputFileName,
-    ];
+      const ffmpegParams = [
+        "-hide_banner",
+        "-i",
+        file.name,
+        "-lavfi",
+        filters,
+        outputFileName,
+      ];
 
-    setIsLoadingInput(false);
+      setIsLoadingInput(false);
 
-    const handleProgress = ({ progress }: { progress: number }) => {
-      const progress_ = Math.trunc(progress * 100);
+      const cleanWasmFiles = () => {
+        console.log("Cleaning up wasm files...");
+        ffmpeg.deleteFile(inputFileName);
+        ffmpeg.deleteFile(outputFileName);
+      };
 
-      setProgress(progress_ > 100 || progress_ < 0 ? 0 : progress_);
-    };
+      const handleProgress = ({ progress }: { progress: number }) => {
+        const progress_ = Math.trunc(progress * 100);
 
-    setIsEncoding(true);
+        setProgress(progress_ > 100 || progress_ < 0 ? 0 : progress_);
+      };
 
-    console.log("Encoding...");
+      const handleLogErrors = ({ message }: { message: string }) => {
+        if (message.includes("Error while")) {
+          toast.error(message);
+          console.error(message);
 
-    ffmpeg.on("progress", handleProgress);
+          abortEncodingRef.current = true;
 
-    await ffmpeg.exec(ffmpegParams);
+          ffmpeg.off("log", handleLogErrors);
+        }
+      };
 
-    ffmpeg.off("progress", handleProgress);
+      setIsEncoding(true);
 
-    setProgress(0);
+      console.log("Encoding...");
 
-    console.log("Done encoding.");
+      ffmpeg.on("log", handleLogErrors);
+      ffmpeg.on("progress", handleProgress);
 
-    setIsEncoding(false);
+      await ffmpeg.exec(ffmpegParams);
 
-    const outputData = await ffmpeg.readFile(outputFileName);
+      ffmpeg.off("log", handleLogErrors);
+      ffmpeg.off("progress", handleProgress);
 
-    const outputFile_ = new File([outputData], outputFileName, {
-      type: "image/gif",
-    });
+      setProgress(0);
+      setIsEncoding(false);
 
-    const url = URL.createObjectURL(outputFile_);
+      if (abortEncodingRef.current) {
+        cleanWasmFiles();
 
-    console.log("Output URL:", url);
+        console.warn("Encoding aborted.");
 
-    setOutputFile({
-      url,
-      file: outputFile_,
-    });
+        abortEncodingRef.current = false;
 
-    setLastInputFile(file);
+        return;
+      }
 
-    // clear wasm files
-    ffmpeg.deleteFile(inputFileName);
-    ffmpeg.deleteFile(outputFileName);
+      console.log("Done encoding.");
+
+      const outputData = await ffmpeg.readFile(outputFileName);
+
+      const outputFile_ = new File([outputData], outputFileName, {
+        type: "image/gif",
+      });
+
+      const url = URL.createObjectURL(outputFile_);
+
+      console.log("Output URL:", url);
+
+      setOutputFile({
+        url,
+        file: outputFile_,
+      });
+
+      setLastInputFile(file);
+
+      cleanWasmFiles();
+    } catch (error) {
+      console.error(error);
+
+      toast.error("Failed to encode the file. Please try again.");
+
+      setIsEncoding(false);
+      setIsLoadingInput(false);
+    }
   };
 
   const commonProps = {
@@ -299,7 +336,14 @@ const Encoder = () => {
             transition={{ duration: 0.6, ease: "easeInOut" }}
             onDrop={(event) => {
               setIsDragging(false);
-              handleFile(event.dataTransfer.files[0]);
+              const file = event.dataTransfer.files[0];
+
+              if (!file) {
+                toast.error("No file dropped.");
+                return;
+              }
+
+              handleFile(file);
             }}
             className="fixed inset-0 grid place-items-center rounded-lg bg-stone-100/70 p-4 dark:bg-black/70"
           >

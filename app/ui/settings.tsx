@@ -47,7 +47,7 @@ const Settings = ({ className, ...props }: Props) => {
         <MdSettingsSuggest className="size-6" />
       </Dialog.Trigger>
 
-      <Dialog.Overlay className="fixed inset-0 z-[1] bg-black/60 transition duration-300 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
+      <Dialog.Overlay className="fixed inset-0 z-[1] bg-black/60 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
 
       <Dialog.Content className="fixed inset-x-0 bottom-0 z-[1] bg-white p-10 data-[state=closed]:animate-slide-down data-[state=open]:animate-slide-up lg:inset-0 lg:m-auto lg:h-[38rem] lg:w-[36rem] lg:rounded-md lg:p-16 lg:data-[state=closed]:animate-scale-out lg:data-[state=open]:animate-scale-in dark:bg-gray-900">
         <div className="absolute left-1/2 top-0 z-[1] flex h-14 w-48 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-emerald-500 lg:left-0 lg:top-20 lg:h-48 lg:w-14 lg:translate-y-0">
