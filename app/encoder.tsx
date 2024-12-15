@@ -109,8 +109,8 @@ const Encoder = () => {
       setIsLoadingInput(true);
 
       const inputFileData = await fetchFile(file);
-      const inputFileName = file.name;
-      const outputFileName = inputFileName.replace(/\.[^/.]+$/, "") + ".gif";
+      const inputFileName = "input-" + file.name;
+      const outputFileName = file.name.replace(/\.[^/.]+$/, "") + ".gif";
 
       await ffmpeg.writeFile(inputFileName, inputFileData);
 
@@ -125,7 +125,7 @@ const Encoder = () => {
       const ffmpegParams = [
         "-hide_banner",
         "-i",
-        file.name,
+        inputFileName,
         "-lavfi",
         filters,
         outputFileName,
