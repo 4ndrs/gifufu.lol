@@ -8,6 +8,7 @@ import { useState } from "react";
 import { MdSettingsSuggest } from "react-icons/md";
 
 import Input from "@/app/ui/input";
+import Switch from "@/app/ui/switch";
 import Button from "@/app/ui/button";
 import useSettingsStore from "@/app/lib/store";
 
@@ -17,17 +18,28 @@ interface Props extends React.ComponentProps<typeof Dialog.Trigger> {}
 
 const Settings = ({ className, ...props }: Props) => {
   const [key, setKey] = useState(0);
+  const [open, setOpen] = useState(false);
 
-  const { fps, reset, height, mpdecimate, updateSettings } = useSettingsStore();
+  const {
+    fps,
+    reset,
+    height,
+    mpdecimate,
+    videoEditorIsEnabled,
+    updateSettings,
+  } = useSettingsStore();
 
   const handleSave = (formData: FormData) => {
     const fps = parseSafeNumber(formData.get("fps"));
     const height = parseSafeNumber(formData.get("height"));
     const mpdecimate = parseSafeNumber(formData.get("mpdecimate"));
+    const videoEditorIsEnabled = formData.get("videoEditorIsEnabled") === "on";
 
-    updateSettings({ fps, height, mpdecimate });
+    updateSettings({ fps, height, mpdecimate, videoEditorIsEnabled });
 
     toast.success("Settings saved!");
+
+    setOpen(false);
   };
 
   const handleReset = () => {
@@ -37,7 +49,7 @@ const Settings = ({ className, ...props }: Props) => {
   };
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
         {...props}
         title="Open settings"
@@ -71,6 +83,15 @@ const Settings = ({ className, ...props }: Props) => {
           </Dialog.Description>
 
           <div className="flex flex-col gap-7">
+            <div className="flex justify-between">
+              <label htmlFor="videoEditorIsEnabled">Enable video editor</label>
+              <Switch
+                id="videoEditorIsEnabled"
+                name="videoEditorIsEnabled"
+                defaultChecked={videoEditorIsEnabled}
+              />
+            </div>
+
             <div>
               <Input
                 name="fps"

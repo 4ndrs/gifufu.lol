@@ -9,7 +9,10 @@ import { useEffect, useRef, useState } from "react";
 
 import Button from "@/app/ui/button";
 import Viewer from "@/app/ui/viewer";
+import VideoEditor from "@/app/ui/video-editor";
 import useSettingsStore from "@/app/lib/store";
+
+import type { TimeStamps } from "@/app/lib/types";
 
 type OutputFile = {
   file: File;
@@ -21,15 +24,17 @@ const Encoder = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isEncoding, setIsEncoding] = useState(false);
   const [outputFile, setOutputFile] = useState<OutputFile>();
+  const [timeStamps, setTimeStamps] = useState<TimeStamps>();
   const [lastInputFile, setLastInputFile] = useState<File>();
   const [isLoadingInput, setIsLoadingInput] = useState(false);
   const [isLoadingFFmpeg, setIsLoadingFFmpeg] = useState(false);
+  const [videoEditorIsOpen, setVideoEditorIsOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg>(undefined);
   const abortEncodingRef = useRef(false);
 
-  const { fps, height, mpdecimate } = useSettingsStore();
+  const { fps, height, mpdecimate, videoEditorIsEnabled } = useSettingsStore();
 
   useEffect(() => {
     // listen for dragging events on the whole document
@@ -93,14 +98,21 @@ const Encoder = () => {
     return ffmpeg;
   };
 
-  const handleFile = async (file: File) => {
+  const handleFile = async (file: File, timeStamps?: TimeStamps) => {
     if (isEncoding || isLoadingFFmpeg) {
       return;
     }
 
+    setLastInputFile(file);
+
     if (outputFile) {
       setOutputFile(undefined);
       URL.revokeObjectURL(outputFile.url);
+    }
+
+    if (!timeStamps && videoEditorIsEnabled) {
+      setVideoEditorIsOpen(true);
+      return;
     }
 
     try {
@@ -120,16 +132,28 @@ const Encoder = () => {
 
       const filters = `${fpsFilter}${scaleFilter}${mpdecimateFilter}split[a][b],[a]palettegen[p],[b][p]paletteuse`;
 
-      console.log("Filters:", filters);
+      const endTime =
+        videoEditorIsEnabled && timeStamps?.endTime
+          ? ["-to", formatTimeForFFmpeg(timeStamps.endTime)]
+          : [];
+
+      const startTime =
+        videoEditorIsEnabled && timeStamps?.startTime
+          ? ["-ss", formatTimeForFFmpeg(timeStamps.startTime)]
+          : [];
 
       const ffmpegParams = [
         "-hide_banner",
+        ...endTime,
+        ...startTime,
         "-i",
         inputFileName,
         "-lavfi",
         filters,
         outputFileName,
       ];
+
+      console.log("FFmpeg command: ffmpeg", ffmpegParams.join(" "));
 
       setIsLoadingInput(false);
 
@@ -197,8 +221,6 @@ const Encoder = () => {
         url,
         file: outputFile_,
       });
-
-      setLastInputFile(file);
 
       cleanWasmFiles();
     } catch (error) {
@@ -289,7 +311,11 @@ const Encoder = () => {
                 return;
               }
 
-              handleFile(lastInputFile);
+              if (videoEditorIsEnabled) {
+                setVideoEditorIsOpen(true);
+              } else {
+                handleFile(lastInputFile);
+              }
             }}
           >
             Re-encode
@@ -354,6 +380,21 @@ const Encoder = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {lastInputFile && videoEditorIsEnabled && (
+        <VideoEditor
+          file={lastInputFile}
+          open={videoEditorIsOpen}
+          timeStamps={timeStamps}
+          onSubmit={(timeStamps) => {
+            setTimeStamps(timeStamps);
+            setVideoEditorIsOpen(false);
+
+            handleFile(lastInputFile, timeStamps);
+          }}
+          onOpenChange={setVideoEditorIsOpen}
+        />
+      )}
     </div>
   );
 };
@@ -361,5 +402,18 @@ const Encoder = () => {
 const Spinner = () => (
   <div className="size-5 shrink-0 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
 );
+
+const formatTimeForFFmpeg = (seconds: number) => {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const millis = Math.floor((seconds % 1) * 1000);
+
+  return `${hrs.toString().padStart(2, "0")}:${mins
+    .toString()
+    .padStart(2, "0")}:${secs.toString().padStart(2, "0")}.${millis
+    .toString()
+    .padStart(3, "0")}`;
+};
 
 export default Encoder;

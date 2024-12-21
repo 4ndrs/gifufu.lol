@@ -12,6 +12,7 @@ type SettingsState = {
   fps?: number;
   height?: number;
   mpdecimate?: number;
+  videoEditorIsEnabled: boolean;
   reset: () => void;
   updateSettings: (settings: SettingsWithoutFunctions) => void;
 };
@@ -25,6 +26,7 @@ const initialSettings = {
   fps: 50,
   mpdecimate: 3,
   height: undefined,
+  videoEditorIsEnabled: false,
 } satisfies SettingsWithoutFunctions;
 
 const useSettingsStore = create<SettingsState>()(

@@ -17,6 +17,7 @@
     "@ffmpeg/ffmpeg": "^0.12.10",
     "@ffmpeg/util": "^0.12.1",
     "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-switch": "^1.1.2",
     "babel-plugin-react-compiler": "^19.0.0-beta-37ed2a7-20241206",
     "eslint-plugin-react-compiler": "^19.0.0-beta-37ed2a7-20241206",
     "eslint-plugin-tailwindcss": "^3.17.5",
