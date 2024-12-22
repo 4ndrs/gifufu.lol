@@ -35,6 +35,7 @@ const VideoEditor = ({
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const wasPlayingRef = useRef(isPlaying);
@@ -61,6 +62,8 @@ const VideoEditor = ({
     const progressBarElement = progressBarRef.current;
 
     let time: number;
+
+    setIsDragging(true);
 
     const handlePointerMove = (event: PointerEvent) => {
       if (!videoRef.current) {
@@ -96,6 +99,8 @@ const VideoEditor = ({
 
       document.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerup", handlePointerUp);
+
+      setIsDragging(false);
     };
 
     document.addEventListener("pointermove", handlePointerMove);
@@ -145,8 +150,14 @@ const VideoEditor = ({
                 videoElement.onpause = () => setIsPlaying(false);
 
                 videoElement.onloadedmetadata = () => {
-                  setEndTime(timeStamps?.endTime ?? videoElement.duration);
-                  setStartTime(timeStamps?.startTime ?? 0);
+                  const endTime = timeStamps?.endTime ?? videoElement.duration;
+                  const startTime = timeStamps?.startTime ?? 0;
+
+                  setEndTime(endTime);
+                  setStartTime(startTime);
+
+                  videoElement.currentTime = startTime;
+
                   setDuration(videoElement.duration);
                 };
 
@@ -160,7 +171,7 @@ const VideoEditor = ({
                 };
 
                 videoElement.onended = () => {
-                  if (videoElement.paused) {
+                  if (isDragging) {
                     return;
                   }
 

@@ -111,6 +111,7 @@ const Encoder = () => {
     }
 
     if (!timeStamps && videoEditorIsEnabled) {
+      setTimeStamps(undefined);
       setVideoEditorIsOpen(true);
       return;
     }
