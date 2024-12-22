@@ -7,7 +7,9 @@ import {
   FaPauseCircle,
 } from "react-icons/fa";
 
-import { useEffect, useRef, useState } from "react";
+import { Mosaic } from "react-loading-indicators";
+import { usePreview } from "@/app/lib/ffmpeg";
+import { useRef, useState } from "react";
 
 import Button from "@/app/ui/button";
 
@@ -30,7 +32,6 @@ const VideoEditor = ({
   timeStamps,
   onOpenChange,
 }: Props) => {
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [endTime, setEndTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState(0);
@@ -42,16 +43,10 @@ const VideoEditor = ({
   const progressBarRef = useRef<HTMLDivElement>(null);
   const lastSeekUpdateRef = useRef(Date.now());
 
-  useEffect(() => {
-    const url = URL.createObjectURL(file);
-
-    setFileUrl(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+  const { url: fileUrl, error, isLoading } = usePreview(file);
 
   const handleCaretPointerDown = (type: "start-time" | "end-time") => {
-    if (!progressBarRef.current) {
+    if (!progressBarRef.current || isLoading || error) {
       return;
     }
 
@@ -111,7 +106,7 @@ const VideoEditor = ({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Overlay className="fixed inset-0 z-[1] bg-black/60 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
 
-      <Dialog.Content className="fixed inset-x-0 bottom-0 z-[1] flex flex-col bg-white px-5 py-10 data-[state=closed]:animate-slide-down data-[state=open]:animate-slide-up lg:inset-0 lg:m-auto lg:h-fit lg:max-h-[min(70rem,95vh)] lg:max-w-[min(58rem,80vw)] lg:rounded-md lg:px-10 lg:py-16 lg:data-[state=closed]:animate-scale-out lg:data-[state=open]:animate-scale-in dark:bg-gray-900">
+      <Dialog.Content className="fixed inset-x-0 bottom-0 z-[1] flex max-h-[80vh] flex-col bg-white px-5 py-10 data-[state=closed]:animate-slide-down data-[state=open]:animate-slide-up lg:inset-0 lg:m-auto lg:h-fit lg:max-h-[min(70rem,95vh)] lg:max-w-[min(58rem,80vw)] lg:rounded-md lg:px-10 lg:py-16 lg:data-[state=closed]:animate-scale-out lg:data-[state=open]:animate-scale-in dark:bg-gray-900">
         <Dialog.Close
           aria-label="close video editor"
           className="absolute right-4 top-4 cursor-pointer rounded-full"
@@ -131,6 +126,17 @@ const VideoEditor = ({
           data-playing={isPlaying}
           className="group flex h-full flex-col gap-4 overflow-y-auto rounded-xl"
         >
+          {isLoading && (
+            <div className="flex flex-col items-center self-center [&>span]:flex [&>span]:flex-col [&>span]:items-center">
+              <Mosaic text="generating preview" size="large" color="#10b981" />
+            </div>
+          )}
+          {error && (
+            <div className="flex flex-col items-center gap-4 self-center">
+              <p className="text-red-500">Error reading the file</p>
+              <Button onClick={() => onOpenChange(false)}>Close</Button>
+            </div>
+          )}
           {fileUrl && (
             <video
               muted
@@ -191,7 +197,7 @@ const VideoEditor = ({
                 };
               }}
             >
-              <source src={fileUrl} type={file.type} />
+              <source src={fileUrl} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           )}
@@ -207,8 +213,8 @@ const VideoEditor = ({
               }
               className="relative h-1 rounded-full bg-emerald-500"
             >
-              <div className="absolute inset-y-0 left-0 w-[var(--start-time-percent)] rounded-l-full bg-emerald-600 dark:bg-emerald-800" />
-              <div className="absolute inset-y-0 left-[var(--end-time-percent)] right-0 rounded-r-full bg-emerald-600 dark:bg-emerald-800" />
+              <div className="absolute inset-y-0 left-0 w-[var(--start-time-percent)] rounded-l-full bg-emerald-300 dark:bg-emerald-800" />
+              <div className="absolute inset-y-0 left-[var(--end-time-percent)] right-0 rounded-r-full bg-emerald-300 dark:bg-emerald-800" />
               <FaCaretUp
                 onPointerDown={() => handleCaretPointerDown("start-time")}
                 className="absolute left-[var(--start-time-percent)] top-0 size-5 -translate-x-1/2 cursor-pointer text-emerald-500 lg:size-8"
@@ -220,6 +226,7 @@ const VideoEditor = ({
             </div>
 
             <button
+              disabled={isLoading || !fileUrl || error}
               className="self-center rounded-full"
               aria-label={(isPlaying ? "pause" : "play") + " video"}
               onClick={() => {
@@ -241,6 +248,7 @@ const VideoEditor = ({
         </div>
 
         <Button
+          disabled={error}
           className="mt-4"
           onClick={() =>
             onSubmit({

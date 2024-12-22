@@ -1,9 +1,9 @@
 "use client";
 
 import { toast } from "sonner";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { fetchFile } from "@ffmpeg/util";
 import { FaFolderOpen } from "react-icons/fa";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import { formatTime, useFFmpeg } from "@/app/lib/ffmpeg";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -27,13 +27,12 @@ const Encoder = () => {
   const [timeStamps, setTimeStamps] = useState<TimeStamps>();
   const [lastInputFile, setLastInputFile] = useState<File>();
   const [isLoadingInput, setIsLoadingInput] = useState(false);
-  const [isLoadingFFmpeg, setIsLoadingFFmpeg] = useState(false);
   const [videoEditorIsOpen, setVideoEditorIsOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const ffmpegRef = useRef<FFmpeg>(undefined);
   const abortEncodingRef = useRef(false);
 
+  const { isLoading: isLoadingFFmpeg, loadFFmpeg } = useFFmpeg();
   const { fps, height, mpdecimate, videoEditorIsEnabled } = useSettingsStore();
 
   useEffect(() => {
@@ -70,33 +69,6 @@ const Encoder = () => {
       document.removeEventListener("dragleave", handleDragLeave);
     };
   }, []);
-
-  const loadFFmpeg = async () => {
-    if (ffmpegRef.current) {
-      return ffmpegRef.current;
-    }
-
-    const ffmpeg = new FFmpeg();
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-
-    ffmpeg.on("log", (log) => console.log(log.message));
-
-    setIsLoadingFFmpeg(true);
-
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(
-        `${baseURL}/ffmpeg-core.wasm`,
-        "application/wasm",
-      ),
-    });
-
-    setIsLoadingFFmpeg(false);
-
-    ffmpegRef.current = ffmpeg;
-
-    return ffmpeg;
-  };
 
   const handleFile = async (file: File, timeStamps?: TimeStamps) => {
     if (isEncoding || isLoadingFFmpeg) {
@@ -135,12 +107,12 @@ const Encoder = () => {
 
       const endTime =
         videoEditorIsEnabled && timeStamps?.endTime
-          ? ["-to", formatTimeForFFmpeg(timeStamps.endTime)]
+          ? ["-to", formatTime(timeStamps.endTime)]
           : [];
 
       const startTime =
         videoEditorIsEnabled && timeStamps?.startTime
-          ? ["-ss", formatTimeForFFmpeg(timeStamps.startTime)]
+          ? ["-ss", formatTime(timeStamps.startTime)]
           : [];
 
       const ffmpegParams = [
@@ -403,18 +375,5 @@ const Encoder = () => {
 const Spinner = () => (
   <div className="size-5 shrink-0 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
 );
-
-const formatTimeForFFmpeg = (seconds: number) => {
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-  const millis = Math.floor((seconds % 1) * 1000);
-
-  return `${hrs.toString().padStart(2, "0")}:${mins
-    .toString()
-    .padStart(2, "0")}:${secs.toString().padStart(2, "0")}.${millis
-    .toString()
-    .padStart(3, "0")}`;
-};
 
 export default Encoder;
