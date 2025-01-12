@@ -44,7 +44,7 @@ const VideoEditor = ({
   const progressBarRef = useRef<HTMLDivElement>(null);
   const lastSeekUpdateRef = useRef(Date.now());
 
-  const { url: fileUrl, error, isLoading } = usePreview(file);
+  const { preview, error, isLoading } = usePreview(file);
 
   const handleCaretPointerDown = (type: "start-time" | "end-time") => {
     if (!progressBarRef.current || isLoading || error) {
@@ -138,7 +138,7 @@ const VideoEditor = ({
               <Button onClick={() => onOpenChange(false)}>Close</Button>
             </div>
           )}
-          {fileUrl && (
+          {preview && (
             <video
               muted
               autoPlay
@@ -201,7 +201,7 @@ const VideoEditor = ({
                 };
               }}
             >
-              <source src={fileUrl} type="video/mp4" />
+              <source src={preview.url} type={preview.fileType} />
               Your browser does not support the video tag.
             </video>
           )}
@@ -234,7 +234,7 @@ const VideoEditor = ({
             </div>
 
             <button
-              disabled={isLoading || !fileUrl || error}
+              disabled={isLoading || !preview || error}
               className="self-center rounded-full"
               aria-label={(isPlaying ? "pause" : "play") + " video"}
               onClick={() => {

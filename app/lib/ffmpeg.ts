@@ -51,8 +51,8 @@ export const useFFmpeg = () => {
 };
 
 export const usePreview = (file: File) => {
-  const [url, setUrl] = useState<string>();
   const [error, setError] = useState(false);
+  const [preview, setPreview] = useState<{ url: string; fileType: string }>();
   const [isLoading, setIsLoading] = useState(false);
 
   const { loadFFmpeg, terminateFFmpeg } = useFFmpeg();
@@ -66,7 +66,7 @@ export const usePreview = (file: File) => {
       cancelled = true;
 
       setError(false);
-      setUrl(undefined);
+      setPreview(undefined);
 
       URL.revokeObjectURL(url);
 
@@ -78,7 +78,7 @@ export const usePreview = (file: File) => {
     if (["video/mp4", "video/webm"].includes(file.type)) {
       url = URL.createObjectURL(file);
 
-      setUrl(url);
+      setPreview({ url, fileType: file.type });
 
       return cleanup;
     }
@@ -153,7 +153,7 @@ export const usePreview = (file: File) => {
 
         console.log("preview URL:", url);
 
-        setUrl(url);
+        setPreview({ url, fileType: "video/mp4" });
       } catch (error) {
         setError(true);
         setIsLoading(false);
@@ -165,7 +165,7 @@ export const usePreview = (file: File) => {
     return cleanup;
   }, [file, loadFFmpeg, terminateFFmpeg]);
 
-  return { url, error, isLoading };
+  return { preview, error, isLoading };
 };
 
 export const formatTime = (seconds: number) => {
