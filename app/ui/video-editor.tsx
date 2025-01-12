@@ -37,6 +37,7 @@ const VideoEditor = ({
   const [startTime, setStartTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const wasPlayingRef = useRef(isPlaying);
@@ -161,6 +162,7 @@ const VideoEditor = ({
 
                   setEndTime(endTime);
                   setStartTime(startTime);
+                  setCurrentTime(startTime);
 
                   videoElement.currentTime = startTime;
 
@@ -168,6 +170,8 @@ const VideoEditor = ({
                 };
 
                 videoElement.ontimeupdate = () => {
+                  setCurrentTime(videoElement.currentTime);
+
                   if (
                     !videoElement.paused &&
                     videoElement.currentTime >= endTime
@@ -209,6 +213,8 @@ const VideoEditor = ({
                 {
                   "--end-time-percent": (endTime / duration) * 100 + "%",
                   "--start-time-percent": (startTime / duration) * 100 + "%",
+                  "--current-time-percent":
+                    (currentTime / duration) * 100 + "%",
                 } as React.CSSProperties
               }
               className="relative h-1 rounded-full bg-emerald-500"
@@ -223,6 +229,8 @@ const VideoEditor = ({
                 onPointerDown={() => handleCaretPointerDown("end-time")}
                 className="absolute left-[var(--end-time-percent)] top-0 size-5 -translate-x-1/2 cursor-pointer text-emerald-500 lg:size-8"
               />
+
+              <div className="absolute -inset-y-1 left-[var(--current-time-percent)] w-px bg-gray-700 dark:bg-white" />
             </div>
 
             <button
