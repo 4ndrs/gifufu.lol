@@ -50,6 +50,50 @@ export const useFFmpeg = () => {
   return { isLoading, loadFFmpeg, terminateFFmpeg };
 };
 
+export const useSize = (file: File) => {
+  const [size, setSize] = useState<{ width: number; height: number }>();
+
+  const { loadFFmpeg } = useFFmpeg();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const ffmpeg = await loadFFmpeg();
+
+        const inputFileData = await fetchFile(file);
+        const inputFileName = "size-input-" + file.name;
+
+        await ffmpeg.writeFile(inputFileName, inputFileData);
+
+        const ffmpegParams = ["-hide_banner", "-i", inputFileName];
+
+        const handleLog = ({ message }: { message: string }) => {
+          const match = message.match(/Video:.*?(\d+)x(\d+)/);
+
+          if (match) {
+            const width = parseInt(match[1], 10);
+            const height = parseInt(match[2], 10);
+
+            setSize({ width, height });
+          }
+        };
+
+        ffmpeg.on("log", handleLog);
+
+        await ffmpeg.exec(ffmpegParams);
+
+        ffmpeg.off("log", handleLog);
+
+        ffmpeg.deleteFile(inputFileName);
+      } catch (error) {
+        console.error("error while getting video size:", error);
+      }
+    })();
+  }, [file, loadFFmpeg]);
+
+  return size;
+};
+
 export const usePreview = (file: File) => {
   const [error, setError] = useState(false);
   const [preview, setPreview] = useState<{ url: string; fileType: string }>();

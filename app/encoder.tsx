@@ -12,7 +12,7 @@ import Viewer from "@/app/ui/viewer";
 import VideoEditor from "@/app/ui/video-editor";
 import useSettingsStore from "@/app/lib/store";
 
-import type { TimeStamps } from "@/app/lib/types";
+import type { CropBox, TimeStamps } from "@/app/lib/types";
 
 type OutputFile = {
   file: File;
@@ -70,7 +70,11 @@ const Encoder = () => {
     };
   }, []);
 
-  const handleFile = async (file: File, timeStamps?: TimeStamps) => {
+  const handleFile = async (
+    file: File,
+    timeStamps?: TimeStamps,
+    cropBox?: CropBox,
+  ) => {
     if (isEncoding || isLoadingFFmpeg) {
       return;
     }
@@ -103,7 +107,11 @@ const Encoder = () => {
       const scaleFilter = height ? `scale=-1:${height},` : "";
       const mpdecimateFilter = mpdecimate ? `mpdecimate=${mpdecimate},` : "";
 
-      const filters = `${fpsFilter}${scaleFilter}${mpdecimateFilter}split[a][b],[a]palettegen[p],[b][p]paletteuse`;
+      const cropFilter = cropBox?.isActive
+        ? `crop=${cropBox.w}:${cropBox.h}:${cropBox.x}:${cropBox.y},`
+        : "";
+
+      const filters = `${fpsFilter}${cropFilter}${scaleFilter}${mpdecimateFilter}split[a][b],[a]palettegen[p],[b][p]paletteuse`;
 
       const endTime =
         videoEditorIsEnabled && timeStamps?.endTime
@@ -356,14 +364,15 @@ const Encoder = () => {
 
       {lastInputFile && videoEditorIsEnabled && (
         <VideoEditor
+          key={lastInputFile.name}
           file={lastInputFile}
           open={videoEditorIsOpen}
           timeStamps={timeStamps}
-          onSubmit={(timeStamps) => {
+          onSubmit={(timeStamps, cropbox) => {
             setTimeStamps(timeStamps);
             setVideoEditorIsOpen(false);
 
-            handleFile(lastInputFile, timeStamps);
+            handleFile(lastInputFile, timeStamps, cropbox);
           }}
           onOpenChange={setVideoEditorIsOpen}
         />
