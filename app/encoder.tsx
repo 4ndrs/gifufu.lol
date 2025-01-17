@@ -107,7 +107,7 @@ const Encoder = () => {
       const scaleFilter = height ? `scale=-1:${height},` : "";
       const mpdecimateFilter = mpdecimate ? `mpdecimate=${mpdecimate},` : "";
 
-      const cropFilter = cropBox?.isActive
+      const cropFilter = cropBox
         ? `crop=${cropBox.w}:${cropBox.h}:${cropBox.x}:${cropBox.y},`
         : "";
 

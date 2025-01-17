@@ -23,7 +23,7 @@ import type { CropBox, TimeStamps } from "@/app/lib/types";
 type Props = {
   open: boolean;
   file: File;
-  onSubmit: (timeStamps: TimeStamps, cropBox: CropBox) => void;
+  onSubmit: (timeStamps: TimeStamps, cropBox?: CropBox) => void;
   timeStamps: TimeStamps | undefined;
   onOpenChange: (open: boolean) => void;
 };
@@ -326,7 +326,7 @@ const VideoEditor = ({
             const y = Math.round(cropPosition.top * scaleY);
             const x = Math.round(cropPosition.left * scaleX);
 
-            const cropBox = { w, h, x, y, isActive: cropIsActive };
+            const cropBox = { w, h, x, y };
             const timeStamps = { endTime, startTime };
 
             console.log(
@@ -344,7 +344,7 @@ const VideoEditor = ({
               videoElement.videoHeight,
             );
 
-            onSubmit(timeStamps, cropBox);
+            onSubmit(timeStamps, cropIsActive ? cropBox : undefined);
           }}
         >
           Continue
