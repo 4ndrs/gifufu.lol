@@ -307,7 +307,12 @@ const VideoEditor = ({
           disabled={error}
           className="mt-4"
           onClick={() => {
-            if (!videoRef.current || !videoSize) {
+            if (!videoRef.current) {
+              return;
+            }
+
+            if (!videoSize) {
+              console.error("video size is not available");
               return;
             }
 

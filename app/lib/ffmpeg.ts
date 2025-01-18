@@ -68,7 +68,7 @@ export const useSize = (file: File) => {
         const ffmpegParams = ["-hide_banner", "-i", inputFileName];
 
         const handleLog = ({ message }: { message: string }) => {
-          const match = message.match(/Video:.*?(\d+)x(\d+)/);
+          const match = message.match(/Video:.*?(\d{2,})x(\d{2,})/);
 
           if (match) {
             const width = parseInt(match[1], 10);
