@@ -1,53 +1,75 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { useEffect, useState } from "react";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
-import { useEffect, useRef, useState } from "react";
+
+let ffmpeg: FFmpeg;
+let loading: Promise<FFmpeg>;
+
+const load = async () => {
+  console.log("loading ffmpeg...");
+
+  if (ffmpeg) {
+    console.log("returning existing instance");
+    return ffmpeg;
+  }
+
+  if (loading) {
+    console.log("returning existing promise");
+    return loading;
+  }
+
+  console.log("executing promise");
+  loading = (async () => {
+    console.log("inside the promise");
+    const _ffmpeg = new FFmpeg();
+    console.log("FFmpeg instance created");
+
+    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+
+    _ffmpeg.on("log", (log) => console.log(log.message));
+
+    console.log("loading core url...");
+
+    const coreURL = await toBlobURL(
+      `${baseURL}/ffmpeg-core.js`,
+      "text/javascript",
+    );
+
+    console.log("loading wasm url...");
+
+    const wasmURL = await toBlobURL(
+      `${baseURL}/ffmpeg-core.wasm`,
+      "application/wasm",
+    );
+
+    console.log("running ffmpeg.load()...");
+
+    await _ffmpeg.load({ coreURL, wasmURL });
+
+    console.log("FFmpeg loaded.");
+
+    ffmpeg = _ffmpeg;
+
+    return _ffmpeg;
+  })();
+
+  return loading;
+};
 
 export const useFFmpeg = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const ffmpegRef = useRef<FFmpeg>(undefined);
-
   const loadFFmpeg = async () => {
-    if (ffmpegRef.current) {
-      return ffmpegRef.current;
-    }
-
-    const ffmpeg = new FFmpeg();
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-
-    ffmpeg.on("log", (log) => console.log(log.message));
-
     setIsLoading(true);
 
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(
-        `${baseURL}/ffmpeg-core.wasm`,
-        "application/wasm",
-      ),
-    });
+    const ffmpeg = await load();
 
     setIsLoading(false);
-
-    ffmpegRef.current = ffmpeg;
-
-    console.log("FFmpeg loaded.");
 
     return ffmpeg;
   };
 
-  const terminateFFmpeg = () => {
-    if (!ffmpegRef.current) {
-      return;
-    }
-
-    ffmpegRef.current.terminate();
-    ffmpegRef.current = undefined;
-
-    console.log("FFmpeg terminated.");
-  };
-
-  return { isLoading, loadFFmpeg, terminateFFmpeg };
+  return { isLoading, loadFFmpeg };
 };
 
 export const useSize = (file: File) => {
@@ -56,9 +78,20 @@ export const useSize = (file: File) => {
   const { loadFFmpeg } = useFFmpeg();
 
   useEffect(() => {
+    let cancelled = false;
+
+    const cleanup = () => {
+      cancelled = true;
+    };
+
     (async () => {
       try {
         const ffmpeg = await loadFFmpeg();
+
+        if (cancelled) {
+          console.log("[useSize]: cancelled after load");
+          return;
+        }
 
         const inputFileData = await fetchFile(file);
         const inputFileName = "size-input-" + file.name;
@@ -89,6 +122,8 @@ export const useSize = (file: File) => {
         console.error("error while getting video size:", error);
       }
     })();
+
+    return cleanup;
   }, [file, loadFFmpeg]);
 
   return size;
@@ -99,7 +134,7 @@ export const usePreview = (file: File) => {
   const [preview, setPreview] = useState<{ url: string; fileType: string }>();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { loadFFmpeg, terminateFFmpeg } = useFFmpeg();
+  const { loadFFmpeg } = useFFmpeg();
 
   useEffect(() => {
     let url: string;
@@ -113,8 +148,6 @@ export const usePreview = (file: File) => {
       setPreview(undefined);
 
       URL.revokeObjectURL(url);
-
-      terminateFFmpeg();
     };
 
     // if it's a compatible format, just use their file URL
@@ -136,7 +169,7 @@ export const usePreview = (file: File) => {
         setIsLoading(false);
 
         if (cancelled) {
-          console.log("cancelled after load");
+          console.log("[usePreview]: cancelled after load");
           return;
         }
 
@@ -174,12 +207,6 @@ export const usePreview = (file: File) => {
 
         setIsLoading(false);
 
-        if (cancelled) {
-          console.log("cancelled after exec");
-
-          return;
-        }
-
         console.log("Done.");
 
         const outputData = await ffmpeg.readFile(outputFileName);
@@ -207,7 +234,7 @@ export const usePreview = (file: File) => {
     })();
 
     return cleanup;
-  }, [file, loadFFmpeg, terminateFFmpeg]);
+  }, [file, loadFFmpeg]);
 
   return { preview, error, isLoading };
 };
