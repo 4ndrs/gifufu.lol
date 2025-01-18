@@ -35,6 +35,25 @@ const anton = Anton_SC({
 export const metadata: Metadata = {
   title: "Gifufu",
   description: "Convert videos to GIFs in your browser with one click.",
+  openGraph: {
+    title: "Gifufu",
+    description: "Convert videos to GIFs in your browser with one click.",
+    siteName: "Gifufu",
+    images: [
+      {
+        url: "https://gifufu.lol/1659207769469684.jpg",
+        width: 319,
+        height: 337,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  icons: {
+    icon: "/1659207769469684.jpg",
+    shortcut: "/1659207769469684.jpg",
+    apple: "/1659207769469684.jpg",
+  },
 };
 
 const RootLayout = async ({
