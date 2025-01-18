@@ -12,7 +12,7 @@ import Viewer from "@/app/ui/viewer";
 import VideoEditor from "@/app/ui/video-editor";
 import useSettingsStore from "@/app/lib/store";
 
-import type { CropBox, TimeStamps } from "@/app/lib/types";
+import type { HandleFileOptions, TimeStamps } from "@/app/lib/types";
 
 type OutputFile = {
   file: File;
@@ -33,7 +33,12 @@ const Encoder = () => {
   const abortEncodingRef = useRef(false);
 
   const { isLoading: isLoadingFFmpeg, loadFFmpeg } = useFFmpeg();
-  const { fps, height, mpdecimate, videoEditorIsEnabled } = useSettingsStore();
+  const {
+    fps,
+    height: settingsHeight,
+    mpdecimate,
+    videoEditorIsEnabled,
+  } = useSettingsStore();
 
   useEffect(() => {
     // listen for dragging events on the whole document
@@ -70,11 +75,15 @@ const Encoder = () => {
     };
   }, []);
 
-  const handleFile = async (
-    file: File,
-    timeStamps?: TimeStamps,
-    cropBox?: CropBox,
-  ) => {
+  const handleFile = async (file: File, options?: HandleFileOptions) => {
+    const { cropBox, timeStamps } = options || {};
+
+    const height = options?.height
+      ? options.height == -1 // no scale
+        ? undefined
+        : options.height
+      : settingsHeight;
+
     if (isEncoding || isLoadingFFmpeg) {
       return;
     }
@@ -368,11 +377,11 @@ const Encoder = () => {
           file={lastInputFile}
           open={videoEditorIsOpen}
           timeStamps={timeStamps}
-          onSubmit={(timeStamps, cropbox) => {
-            setTimeStamps(timeStamps);
+          onSubmit={(options) => {
+            setTimeStamps(options.timeStamps);
             setVideoEditorIsOpen(false);
 
-            handleFile(lastInputFile, timeStamps, cropbox);
+            handleFile(lastInputFile, options);
           }}
           onOpenChange={setVideoEditorIsOpen}
         />

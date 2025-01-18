@@ -10,20 +10,22 @@ import {
 } from "react-icons/fa";
 
 import { Mosaic } from "react-loading-indicators";
+import { useEffect, useRef, useState } from "react";
 import { usePreview, useSize } from "@/app/lib/ffmpeg";
-import { useRef, useState } from "react";
 
 import Button from "@/app/ui/button";
 import Cropper from "@/app/ui/video-editor/cropper";
+import ScaleSelector from "@/app/ui/video-editor/scale-selector";
+import useSettingsStore from "@/app/lib/store";
 
 import * as Dialog from "@radix-ui/react-dialog";
 
-import type { CropBox, TimeStamps } from "@/app/lib/types";
+import type { HandleFileOptions, TimeStamps } from "@/app/lib/types";
 
 type Props = {
   open: boolean;
   file: File;
-  onSubmit: (timeStamps: TimeStamps, cropBox?: CropBox) => void;
+  onSubmit: (options: HandleFileOptions) => void;
   timeStamps: TimeStamps | undefined;
   onOpenChange: (open: boolean) => void;
 };
@@ -52,6 +54,14 @@ const VideoEditor = ({
     top: 0,
     left: 0,
   });
+
+  const { height: settingsHeight } = useSettingsStore();
+
+  const [scale, setScale] = useState(settingsHeight?.toString() ?? "");
+
+  useEffect(() => {
+    setScale(settingsHeight?.toString() ?? "");
+  }, [settingsHeight]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const wasPlayingRef = useRef(isPlaying);
@@ -141,7 +151,7 @@ const VideoEditor = ({
 
         <div
           data-playing={isPlaying}
-          className="group flex h-full flex-col gap-4 overflow-hidden rounded-xl"
+          className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-xl"
         >
           {isLoading && (
             <div className="flex flex-col items-center self-center [&>span]:flex [&>span]:flex-col [&>span]:items-center">
@@ -155,7 +165,7 @@ const VideoEditor = ({
             </div>
           )}
           {preview && (
-            <div className="relative flex flex-col overflow-y-auto rounded-xl">
+            <div className="group/video-container relative flex flex-col overflow-y-auto rounded-xl">
               <video
                 muted
                 autoPlay
@@ -233,6 +243,15 @@ const VideoEditor = ({
                 />
               )}
             </div>
+          )}
+
+          {preview && (
+            <ScaleSelector
+              value={scale}
+              settingsHeight={settingsHeight}
+              onValueChange={(value) => setScale(value)}
+              className="absolute right-2 top-2"
+            />
           )}
 
           <div className="flex flex-col gap-6 rounded-xl bg-gray-100 p-4 lg:gap-10 lg:p-10 dark:bg-gray-700">
@@ -349,7 +368,15 @@ const VideoEditor = ({
               videoElement.videoHeight,
             );
 
-            onSubmit(timeStamps, cropIsActive ? cropBox : undefined);
+            const options = {
+              height: scale !== "" ? parseInt(scale) : undefined,
+              cropBox: cropIsActive ? cropBox : undefined,
+              timeStamps,
+            };
+
+            console.log("options:", options);
+
+            onSubmit(options);
           }}
         >
           Continue

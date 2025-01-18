@@ -3,7 +3,7 @@ import Wave from "@/app/ui/wave";
 
 import { cookies } from "next/headers";
 import { Toaster } from "sonner";
-import { Lato, Fredoka, Quicksand } from "next/font/google";
+import { Lato, Fredoka, Quicksand, Anton_SC } from "next/font/google";
 
 import "@/app/globals.css";
 
@@ -26,6 +26,12 @@ const quicksand = Quicksand({
   variable: "--font-quicksand",
 });
 
+const anton = Anton_SC({
+  weight: ["400"],
+  subsets: ["latin"],
+  variable: "--font-anton",
+});
+
 export const metadata: Metadata = {
   title: "Gifufu",
   description: "Convert videos to GIFs in your browser with one click.",
@@ -42,7 +48,7 @@ const RootLayout = async ({
     // eslint-disable-next-line tailwindcss/no-custom-classname
     <html lang="en" className={isDarkMode ? "dark" : undefined}>
       <body
-        className={`${lato.className} ${fredoka.variable} ${quicksand.variable} min-h-screen bg-white text-black antialiased dark:bg-gray-900 dark:text-gray-200`}
+        className={`${lato.className} ${fredoka.variable} ${quicksand.variable} ${anton.variable} min-h-screen bg-white text-black antialiased dark:bg-gray-900 dark:text-gray-200`}
       >
         <div className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
           <div className="relative flex flex-1 flex-col px-5 pt-5">
