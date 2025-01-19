@@ -173,11 +173,13 @@ export const usePreview = (file: File) => {
           return;
         }
 
+        setIsLoading(true);
+
+        console.log("[usePreview]: loading the file...");
+
         const inputFileData = await fetchFile(file);
         const inputFileName = "preview-input-" + file.name;
         const outputFileName = file.name.replace(/\.[^/.]+$/, "") + ".mp4";
-
-        setIsLoading(true);
 
         await ffmpeg.writeFile(inputFileName, inputFileData);
 
@@ -201,7 +203,7 @@ export const usePreview = (file: File) => {
           outputFileName,
         ];
 
-        console.log("Generating preview...");
+        console.log("[usePreview]: Generating preview...");
 
         await ffmpeg.exec(ffmpegParams);
 
@@ -217,12 +219,12 @@ export const usePreview = (file: File) => {
 
         const url = URL.createObjectURL(outputFile);
 
-        console.log("Cleaning up preview wasm files...");
+        console.log("[usePreview]: Cleaning up preview wasm files...");
 
         ffmpeg.deleteFile(inputFileName);
         ffmpeg.deleteFile(outputFileName);
 
-        console.log("preview URL:", url);
+        console.log("[usePreview]: preview URL:", url);
 
         setPreview({ url, fileType: "video/mp4" });
       } catch (error) {
