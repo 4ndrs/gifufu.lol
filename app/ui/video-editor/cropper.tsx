@@ -29,32 +29,36 @@ const Cropper = ({
 
     initialMousePositionRef.current = { x: event.clientX, y: event.clientY };
 
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!videoRef.current) {
-        return;
-      }
+    const controller = new AbortController();
 
-      const videoRect = videoRef.current.getBoundingClientRect();
+    const { signal } = controller;
 
-      let top =
-        position.top + event.clientY - initialMousePositionRef.current.y;
+    document.addEventListener(
+      "pointermove",
+      (event) => {
+        if (!videoRef.current) {
+          return;
+        }
 
-      let left =
-        position.left + event.clientX - initialMousePositionRef.current.x;
+        const videoRect = videoRef.current.getBoundingClientRect();
 
-      top = Math.max(0, Math.min(videoRect.height - size.height, top));
-      left = Math.max(0, Math.min(videoRect.width - size.width, left));
+        let top =
+          position.top + event.clientY - initialMousePositionRef.current.y;
 
-      onPositionChange({ top, left });
-    };
+        let left =
+          position.left + event.clientX - initialMousePositionRef.current.x;
 
-    const handlePointerUp = () => {
-      document.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("pointermove", handlePointerMove);
-    };
+        top = Math.max(0, Math.min(videoRect.height - size.height, top));
+        left = Math.max(0, Math.min(videoRect.width - size.width, left));
 
-    document.addEventListener("pointerup", handlePointerUp);
-    document.addEventListener("pointermove", handlePointerMove);
+        onPositionChange({ top, left });
+      },
+      { signal },
+    );
+
+    document.addEventListener("pointerup", () => controller.abort(), {
+      signal,
+    });
   };
 
   const handleResizeStart = (
@@ -68,80 +72,84 @@ const Cropper = ({
     const initialSize = { ...size };
     const initialPosition = { ...position };
 
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!videoRef.current) {
-        return;
-      }
+    const controller = new AbortController();
 
-      const videoRect = videoRef.current.getBoundingClientRect();
+    const { signal } = controller;
 
-      const deltaX = event.clientX - initialMousePositionRef.current.x;
-      const deltaY = event.clientY - initialMousePositionRef.current.y;
+    document.addEventListener(
+      "pointermove",
+      (event) => {
+        if (!videoRef.current) {
+          return;
+        }
 
-      let top = initialPosition.top;
-      let left = initialPosition.left;
+        const videoRect = videoRef.current.getBoundingClientRect();
 
-      let width = initialSize.width;
-      let height = initialSize.height;
+        const deltaX = event.clientX - initialMousePositionRef.current.x;
+        const deltaY = event.clientY - initialMousePositionRef.current.y;
 
-      const minimumSize = 32;
+        let top = initialPosition.top;
+        let left = initialPosition.left;
 
-      switch (corner) {
-        case "top-left":
-          top = initialPosition.top + deltaY;
-          left = initialPosition.left + deltaX;
-          width = Math.max(minimumSize, initialSize.width - deltaX);
-          height = Math.max(minimumSize, initialSize.height - deltaY);
+        let width = initialSize.width;
+        let height = initialSize.height;
 
-          if (left < 0 || top < 0) {
-            return;
-          }
+        const minimumSize = 32;
 
-          break;
+        switch (corner) {
+          case "top-left":
+            top = initialPosition.top + deltaY;
+            left = initialPosition.left + deltaX;
+            width = Math.max(minimumSize, initialSize.width - deltaX);
+            height = Math.max(minimumSize, initialSize.height - deltaY);
 
-        case "top-right":
-          top = initialPosition.top + deltaY;
-          width = Math.max(minimumSize, initialSize.width + deltaX);
-          height = Math.max(minimumSize, initialSize.height - deltaY);
+            if (left < 0 || top < 0) {
+              return;
+            }
 
-          if (top < 0) {
-            return;
-          }
+            break;
 
-          break;
+          case "top-right":
+            top = initialPosition.top + deltaY;
+            width = Math.max(minimumSize, initialSize.width + deltaX);
+            height = Math.max(minimumSize, initialSize.height - deltaY);
 
-        case "bottom-left":
-          left = initialPosition.left + deltaX;
-          width = Math.max(minimumSize, initialSize.width - deltaX);
-          height = Math.max(minimumSize, initialSize.height + deltaY);
+            if (top < 0) {
+              return;
+            }
 
-          if (left < 0) {
-            return;
-          }
+            break;
 
-          break;
+          case "bottom-left":
+            left = initialPosition.left + deltaX;
+            width = Math.max(minimumSize, initialSize.width - deltaX);
+            height = Math.max(minimumSize, initialSize.height + deltaY);
 
-        case "bottom-right":
-          width = Math.max(minimumSize, initialSize.width + deltaX);
-          height = Math.max(minimumSize, initialSize.height + deltaY);
+            if (left < 0) {
+              return;
+            }
 
-          break;
-      }
+            break;
 
-      width = Math.min(width, videoRect.width - left);
-      height = Math.min(height, videoRect.height - top);
+          case "bottom-right":
+            width = Math.max(minimumSize, initialSize.width + deltaX);
+            height = Math.max(minimumSize, initialSize.height + deltaY);
 
-      onSizeChange({ width, height });
-      onPositionChange({ top, left });
-    };
+            break;
+        }
 
-    const handlePointerUp = () => {
-      document.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("pointermove", handlePointerMove);
-    };
+        width = Math.min(width, videoRect.width - left);
+        height = Math.min(height, videoRect.height - top);
 
-    document.addEventListener("pointerup", handlePointerUp);
-    document.addEventListener("pointermove", handlePointerMove);
+        onSizeChange({ width, height });
+        onPositionChange({ top, left });
+      },
+      { signal },
+    );
+
+    document.addEventListener("pointerup", () => controller.abort(), {
+      signal,
+    });
   };
 
   return (

@@ -87,46 +87,55 @@ const VideoEditor = ({
 
     setIsDragging(true);
 
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!videoRef.current) {
-        return;
-      }
+    const controller = new AbortController();
 
-      const rect = progressBarElement.getBoundingClientRect();
-      const percent = (event.clientX - rect.left) / rect.width;
+    const { signal } = controller;
 
-      if (type === "start-time") {
-        time = Math.max(0, Math.min(endTime, duration * percent));
-        setStartTime(time);
-      } else {
-        time = Math.max(startTime, Math.min(duration, duration * percent));
-        setEndTime(time);
-      }
+    document.addEventListener(
+      "pointermove",
+      (event) => {
+        if (!videoRef.current) {
+          return;
+        }
 
-      const now = Date.now();
+        const rect = progressBarElement.getBoundingClientRect();
+        const percent = (event.clientX - rect.left) / rect.width;
 
-      // Seek only every 80 milliseconds
-      if (now - lastSeekUpdateRef.current > 80) {
-        videoRef.current.currentTime = time;
+        if (type === "start-time") {
+          time = Math.max(0, Math.min(endTime, duration * percent));
+          setStartTime(time);
+        } else {
+          time = Math.max(startTime, Math.min(duration, duration * percent));
+          setEndTime(time);
+        }
 
-        lastSeekUpdateRef.current = now;
-      }
-    };
+        const now = Date.now();
 
-    const handlePointerUp = () => {
-      if (wasPlayingRef.current && videoRef.current) {
-        videoRef.current.play();
-        videoRef.current.currentTime = type === "start-time" ? time : startTime;
-      }
+        // Seek only every 80 milliseconds
+        if (now - lastSeekUpdateRef.current > 80) {
+          videoRef.current.currentTime = time;
 
-      document.removeEventListener("pointermove", handlePointerMove);
-      document.removeEventListener("pointerup", handlePointerUp);
+          lastSeekUpdateRef.current = now;
+        }
+      },
+      { signal },
+    );
 
-      setIsDragging(false);
-    };
+    document.addEventListener(
+      "pointerup",
+      () => {
+        if (wasPlayingRef.current && videoRef.current) {
+          videoRef.current.play();
+          videoRef.current.currentTime =
+            type === "start-time" ? time : startTime;
+        }
 
-    document.addEventListener("pointermove", handlePointerMove);
-    document.addEventListener("pointerup", handlePointerUp);
+        setIsDragging(false);
+
+        controller.abort();
+      },
+      { signal },
+    );
   };
 
   return (

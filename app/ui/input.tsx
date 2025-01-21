@@ -13,6 +13,10 @@ const Input = ({ label, placeholder, ...props }: Props) => (
           return;
         }
 
+        const controller = new AbortController();
+
+        const { signal } = controller;
+
         const handleInput = () => {
           if (inputElement.value) {
             inputElement.setAttribute("data-has-text", "true");
@@ -23,9 +27,9 @@ const Input = ({ label, placeholder, ...props }: Props) => (
 
         handleInput();
 
-        inputElement.addEventListener("input", handleInput);
+        inputElement.addEventListener("input", handleInput, { signal });
 
-        return () => inputElement.removeEventListener("input", handleInput);
+        return () => controller.abort();
       }}
       aria-label={label}
       className="peer mt-1 rounded-[4px] border-2 border-gray-500 px-[0.9375rem] py-[0.8125rem] focus:outline-none focus:outline-[3px] focus:outline-offset-[-2px] focus:outline-[var(--highlight-color)] focus:ring-0 dark:border-gray-600 dark:bg-gray-800"

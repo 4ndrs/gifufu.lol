@@ -6,14 +6,24 @@ const Wave = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+
+    const { signal } = controller;
+
     const canvas = canvasRef.current;
-    if (!canvas) return;
+
+    if (!canvas) {
+      return;
+    }
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    let animationFrameId: number;
+    if (!ctx) {
+      return;
+    }
+
     let offset = 0;
+    let animationFrameId: number;
 
     const resize = () => {
       canvas.width = canvas.offsetWidth;
@@ -21,7 +31,9 @@ const Wave = () => {
     };
 
     const animate = () => {
-      if (!ctx || !canvas) return;
+      if (!ctx || !canvas) {
+        return;
+      }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -44,11 +56,13 @@ const Wave = () => {
     };
 
     resize();
-    window.addEventListener("resize", resize);
+
+    window.addEventListener("resize", resize, { signal });
+
     animate();
 
     return () => {
-      window.removeEventListener("resize", resize);
+      controller.abort();
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

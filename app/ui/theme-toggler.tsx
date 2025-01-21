@@ -16,18 +16,21 @@ const ThemeToggler = ({ className }: Props) => {
       return;
     }
 
+    const controller = new AbortController();
+
+    const { signal } = controller;
+
     // listen for theme changes when the theme cookie is not set
     // we need to change themes somehow when the user changes their system theme
     const media = window.matchMedia("(prefers-color-scheme: dark)");
 
     enableDarkMode(media.matches);
 
-    const listener = (event: MediaQueryListEvent) =>
-      enableDarkMode(event.matches);
+    media.addEventListener("change", (event) => enableDarkMode(event.matches), {
+      signal,
+    });
 
-    media.addEventListener("change", listener);
-
-    return () => media.removeEventListener("change", listener);
+    return () => controller.abort();
   }, []);
 
   return (

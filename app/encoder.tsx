@@ -33,46 +33,57 @@ const Encoder = () => {
   const abortEncodingRef = useRef(false);
 
   const { isLoading: isLoadingFFmpeg, loadFFmpeg } = useFFmpeg();
+
   const {
     fps,
-    height: settingsHeight,
     mpdecimate,
     videoEditorIsEnabled,
+    height: settingsHeight,
   } = useSettingsStore();
 
   useEffect(() => {
+    const controller = new AbortController();
+
+    const { signal } = controller;
+
     // listen for dragging events on the whole document
-    const handleDragEnter = (event: DragEvent) => {
-      setIsDragging(true);
-      event.preventDefault();
-    };
+    document.addEventListener(
+      "drop",
+      (event) => {
+        setIsDragging(false);
+        event.preventDefault();
+      },
+      { signal },
+    );
 
-    const handleDragOver = (event: DragEvent) => {
-      setIsDragging(true);
-      event.preventDefault();
-    };
+    document.addEventListener(
+      "dragover",
+      (event) => {
+        setIsDragging(true);
+        event.preventDefault();
+      },
+      { signal },
+    );
 
-    const handleDragLeave = (event: DragEvent) => {
-      setIsDragging(false);
-      event.preventDefault();
-    };
+    document.addEventListener(
+      "dragenter",
+      (event) => {
+        setIsDragging(true);
+        event.preventDefault();
+      },
+      { signal },
+    );
 
-    const handleDrop = (event: DragEvent) => {
-      setIsDragging(false);
-      event.preventDefault();
-    };
+    document.addEventListener(
+      "dragleave",
+      (event: DragEvent) => {
+        setIsDragging(false);
+        event.preventDefault();
+      },
+      { signal },
+    );
 
-    document.addEventListener("drop", handleDrop);
-    document.addEventListener("dragover", handleDragOver);
-    document.addEventListener("dragenter", handleDragEnter);
-    document.addEventListener("dragleave", handleDragLeave);
-
-    return () => {
-      document.removeEventListener("drop", handleDrop);
-      document.removeEventListener("dragover", handleDragOver);
-      document.removeEventListener("dragenter", handleDragEnter);
-      document.removeEventListener("dragleave", handleDragLeave);
-    };
+    return () => controller.abort();
   }, []);
 
   const handleFile = async (file: File, options?: HandleFileOptions) => {
